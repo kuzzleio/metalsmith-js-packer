@@ -20,12 +20,14 @@ module.exports = options => {
   let uglifyEnabled = options.uglify || true;
   let uglifyOptions = options.uglifyOptions || {};
   let exclude = options.exclude || [];
+  let relativeLinks = options.relativeLinks || false;
 
   return (files, metalsmith, done) => {
     let scripts = {};
     let packedScripts = {};
     let remoteScriptsPromises = [];
     let packedScriptsUsage = {};
+
 
     for (let file in files) {
       // parse only builded html files
@@ -200,7 +202,13 @@ module.exports = options => {
 
         // include script reference only when inline mode is disabled
         if (!inline) {
-          $('<script>').attr('src', siteRootPath + ouputPath + pageScriptsHash + '.min.js').appendTo('body');
+          let jsfile = siteRootPath + ouputPath + pageScriptsHash + '.min.js';
+
+          if (relativeLinks) {
+            jsfile = files[file].link && files[file].link(siteRootPath + file, jsfile) || jsfile;
+          }
+
+          $('<script>').attr('src', jsfile).appendTo('body');
         }
 
         files[file].contents = Buffer.from($.html(), 'utf-8');
